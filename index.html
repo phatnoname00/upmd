@@ -43,8 +43,8 @@ button:hover,.btn:hover{border-color:var(--accent)}
 .primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:600}
 button[aria-pressed="true"]{border-color:var(--accent); color:var(--accent); font-weight:600}
 :focus-visible{outline:2px solid var(--accent); outline-offset:2px}
-main{max-width:48rem; margin:0 auto; padding:1.5rem 1rem 4rem}
-.sheet{background:var(--panel-a); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+main{width:100%; margin:0 auto; padding:1.5rem 1rem 4rem}
+.sheet{position:relative; width:min(var(--w,768px),100%); margin:0 auto; background:var(--panel-a); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
   border:1px solid var(--line); border-radius:12px; padding:2rem 1.5rem}
 #drop{border:2px dashed var(--line); border-radius:10px; padding:2.5rem 1.25rem; text-align:center;
   font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -55,8 +55,8 @@ main{max-width:48rem; margin:0 auto; padding:1.5rem 1rem 4rem}
   border-radius:6px; background:var(--panel); color:var(--ink); font:.9rem/1.5 "JetBrains Mono",monospace}
 #doc,#src{display:none}
 #doc h1,#doc h2,#doc h3,#doc h4{line-height:1.3; margin:2rem 0 .7rem}
-#doc h1{font-size:2rem; margin-top:0; padding-bottom:.4rem; border-bottom:1px solid var(--line)}
-#doc h2{font-size:1.5rem} #doc h3{font-size:1.2rem} #doc h4{font-size:1.05rem}
+#doc h1{font-size:2em; margin-top:0; padding-bottom:.4rem; border-bottom:1px solid var(--line)}
+#doc h2{font-size:1.5em} #doc h3{font-size:1.2em} #doc h4{font-size:1.05em}
 #doc p,#doc ul,#doc ol,#doc pre,#doc blockquote{margin:0 0 1.1rem}
 #doc a{color:var(--accent)} #doc img{max-width:100%; height:auto}
 #doc code{font-family:"JetBrains Mono",monospace; font-size:.86em; background:var(--code-bg); padding:.12em .35em; border-radius:4px}
@@ -65,7 +65,7 @@ main{max-width:48rem; margin:0 auto; padding:1.5rem 1rem 4rem}
 #doc blockquote{border-left:4px solid var(--quote); padding:.1rem 1rem; color:var(--muted)}
 #doc hr{border:0; border-top:1px solid var(--line); margin:2rem 0}
 .scroll{overflow-x:auto; margin-bottom:1.1rem}
-#doc table{border-collapse:collapse; min-width:100%; font-size:.95rem; margin:0}
+#doc table{border-collapse:collapse; min-width:100%; font-size:.95em; margin:0}
 #doc th,#doc td{border:1px solid var(--line); padding:.45rem .7rem; text-align:left}
 #doc th{background:var(--code-bg)}
 #doc li>input[type=checkbox]{margin-right:.4rem}
@@ -106,8 +106,41 @@ span.ul{text-decoration:underline; text-decoration-color:var(--accent); text-dec
 #list li.grp:first-child{margin-top:0}
 #list .s{display:block; margin-top:.25rem; font-size:.78rem; color:var(--muted); font-weight:400; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical}
 #list .s b{color:var(--accent); background:rgba(255,206,60,.28); font-weight:600}
+#doc{font-size:calc(1rem*var(--fs,1))} #src{font-size:calc(.88rem*var(--fs,1))}
+#vp{position:absolute; right:.75rem; top:calc(100% + .4rem); z-index:40; width:min(19rem,calc(100vw - 1.5rem)); padding:.9rem;
+  background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 28px rgba(0,0,0,.3)}
+#vp[hidden]{display:none}
+#vp .row{display:flex; justify-content:space-between; align-items:center; gap:.5rem; margin:.1rem 0 .5rem}
+#vp .presets{display:grid; grid-template-columns:1fr 1fr; gap:.4rem; margin-bottom:.7rem}
+#vp .presets button,#vp .row button{padding:.3rem .5rem; font-size:.86rem}
+#vp input[type=range]{width:100%; margin:0 0 1rem; accent-color:var(--accent)}
+#vp .rs{width:100%; margin-top:.8rem}
+.grip{position:absolute; top:0; bottom:0; width:14px; cursor:ew-resize; touch-action:none; z-index:2}
+.grip.l{left:-7px} .grip.r{right:-7px}
+.grip i{position:sticky; top:calc(50vh - 28px); display:block; width:14px; height:56px; border-radius:8px; background:var(--panel); border:1px solid var(--line); opacity:.6}
+.grip i::after{content:""; position:absolute; left:50%; top:16px; bottom:16px; width:2px; margin-left:-1px; background:var(--muted); border-radius:2px}
+.grip:hover i,.grip.on i{opacity:1; border-color:var(--accent)}
+#wbadge{position:fixed; left:50%; top:4.5rem; transform:translateX(-50%); z-index:50; padding:.25rem .7rem; border-radius:999px; background:var(--accent); color:var(--accent-ink); font:600 .85rem system-ui,sans-serif}
+#wbadge[hidden]{display:none}
+@media (max-width:700px){.grip{display:none}}
 @media (max-width:520px){.sheet{padding:1.25rem 1rem}}
-@media print{.bar,#sky,#lib,#scrim,#tb{display:none} body{background:#fff; color:#000} .sheet{border:0; background:none}}
+/* khối code / bảng có nút sao chép */
+.cb{margin:0 0 1.1rem; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--code-bg)}
+.cbh{display:flex; align-items:center; justify-content:space-between; padding:.3rem .5rem .3rem .9rem;
+  border-bottom:1px solid var(--line); font:600 .82rem system-ui,-apple-system,"Segoe UI",sans-serif;
+  color:var(--muted); user-select:none; -webkit-user-select:none}
+.cbh::before{content:attr(data-l)}
+.cbh .acts{display:flex; gap:.2rem}
+.cbh button{padding:.3rem .4rem; line-height:0; border:0; background:none; color:var(--muted)}
+.cbh button:hover,.cbh button[aria-pressed="true"]{color:var(--accent)}
+.cbh svg{width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+.cbh .ck{display:none}
+.cbh button.ok{color:var(--accent)} .cbh button.ok .cp{display:none} .cbh button.ok .ck{display:block}
+#doc .cb pre{margin:0; border-radius:0; background:none}
+#doc .cb pre.wrap{white-space:pre-wrap; word-break:break-word}
+#doc .cb .scroll{margin:0}
+@media print{.cbh{display:none}}
+@media print{.bar,#sky,#lib,#scrim,#tb,.grip,#wbadge{display:none} body{background:#fff; color:#000} .sheet{border:0; background:none; width:100%}}
 </style>
 </head>
 <body>
@@ -116,6 +149,17 @@ span.ul{text-decoration:underline; text-decoration-color:var(--accent); text-dec
   <button id="libBtn" aria-expanded="false">Thư viện</button>
   <span class="name" id="name">Chưa mở tệp nào</span>
   <button id="view" aria-pressed="false" hidden>Xem mã nguồn</button>
+  <button id="vpBtn" aria-expanded="false">Kích thước</button>
+  <div id="vp" hidden role="dialog" aria-label="Kích thước hiển thị">
+    <div class="row"><b>Độ rộng trang</b><span id="wv"></span></div>
+    <div class="presets">
+      <button data-w="390" aria-pressed="false">Điện thoại</button><button data-w="768" aria-pressed="false">Máy tính bảng</button>
+      <button data-w="1024" aria-pressed="false">Laptop</button><button data-w="full" aria-pressed="false">Toàn màn hình</button>
+    </div>
+    <input id="wr" type="range" min="320" max="1400" step="10" aria-label="Độ rộng trang">
+    <div class="row"><b>Cỡ chữ</b><span><button id="fm" aria-label="Giảm cỡ chữ">A−</button> <b id="fv">100%</b> <button id="fp" aria-label="Tăng cỡ chữ">A+</button></span></div>
+    <button class="rs" id="rs">Đặt lại mặc định</button>
+  </div>
   <button id="theme">Đổi giao diện</button>
   <label class="btn primary" for="file">Mở tệp .md</label>
   <input id="file" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple hidden>
@@ -131,9 +175,11 @@ span.ul{text-decoration:underline; text-decoration-color:var(--accent); text-dec
   <ul id="list"></ul>
   <button id="closeLib">Đóng</button>
 </aside>
+<div id="wbadge" hidden></div>
 <div id="tb" role="toolbar" aria-label="Công cụ chú thích"></div>
 <main>
-  <div class="sheet">
+  <div class="sheet" id="sheet">
+    <div class="grip l" data-s="l" title="Kéo để đổi độ rộng, bấm đúp để đặt lại"><i></i></div><div class="grip r" data-s="r" title="Kéo để đổi độ rộng, bấm đúp để đặt lại"><i></i></div>
     <section id="drop">
       <h1>Xem tệp Markdown</h1>
       <p>Kéo tệp .md vào đây hoặc chọn từ máy. Tệp được đọc và lưu ngay trên trình duyệt, không tải lên đâu cả. Bôi đen chữ để highlight hoặc gạch chân.</p>
@@ -188,7 +234,41 @@ span.ul{text-decoration:underline; text-decoration-color:var(--accent); text-dec
       var w=document.createElement('div');w.className='scroll';t.parentNode.insertBefore(w,t);w.appendChild(t);});
     doc.querySelectorAll('a[href^="http"]').forEach(function(a){a.target='_blank';a.rel='noopener noreferrer'});
     cur.anns.forEach(wrap);
+    addCopyBars();
   }
+
+  /* ---------- Sao chép code / bảng ---------- */
+  var IC_CP='<svg class="cp" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><svg class="ck" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>';
+  var IC_WP='<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h13a3 3 0 0 1 0 6h-4m0 0l2-2m-2 2l2 2M4 18h5"/></svg>';
+  function copyText(t,btn){
+    function ok(){btn.classList.add('ok');setTimeout(function(){btn.classList.remove('ok')},1500)}
+    function fb(){var a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;top:0;opacity:0';
+      document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){}a.remove()}
+    if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(ok,fb);else fb();
+  }
+  function mkBtn(icon,label,fn){var b=document.createElement('button');b.innerHTML=icon;b.setAttribute('aria-label',label);b.title=label;b.addEventListener('click',fn);return b}
+  function decorate(el,label,getText,canWrap){
+    var box=document.createElement('div'),h=document.createElement('div'),acts=document.createElement('div');
+    box.className='cb';h.className='cbh';h.dataset.l=label;acts.className='acts';
+    if(canWrap){var w=mkBtn(IC_WP,'Xuống dòng',function(){var on=el.classList.toggle('wrap');w.setAttribute('aria-pressed',String(on))});
+      w.setAttribute('aria-pressed','false');acts.appendChild(w)}
+    var c=mkBtn(IC_CP,'Sao chép',function(){copyText(getText(),c)});acts.appendChild(c);
+    h.appendChild(acts);el.parentNode.insertBefore(box,el);box.appendChild(h);box.appendChild(el);
+  }
+  function addCopyBars(){
+    doc.querySelectorAll('pre').forEach(function(p){
+      var c=p.querySelector('code'),m=c&&/language-([\w+#-]+)/.exec(c.className);
+      decorate(p,m?m[1]:'Mã',function(){return (c||p).textContent.replace(/\n$/,'')},true);
+    });
+    doc.querySelectorAll('.scroll').forEach(function(s){
+      decorate(s,'Bảng',function(){
+        return Array.prototype.map.call(s.querySelectorAll('tr'),function(r){
+          return Array.prototype.map.call(r.children,function(x){return x.textContent.trim().replace(/\s+/g,' ')}).join('\t');
+        }).join('\n');
+      },false);
+    });
+  }
+
   function setMode(s){
     showSource=s; doc.style.display=s?'none':'block'; src.style.display=s?'block':'none';
     view.textContent=s?'Xem bản dựng':'Xem mã nguồn'; view.setAttribute('aria-pressed',String(s)); hideTb();
@@ -402,6 +482,47 @@ span.ul{text-decoration:underline; text-decoration-color:var(--accent); text-dec
   }
   addEventListener('resize',size);size();readStar();if(!still)requestAnimationFrame(frame);
   matchMedia('(prefers-color-scheme: dark)').addEventListener&&matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readStar);
+
+  /* ---------- Kích thước: thiết bị, kéo tay, cỡ chữ ---------- */
+  var root=document.documentElement,sheet=$('sheet'),vp=$('vp'),wr=$('wr'),badge=$('wbadge'),vw=768,pct=100,drag=null;
+  function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+  function maxW(){return Math.max(320,innerWidth-32)}
+  function applyW(v,persist){
+    vw=v; root.style.setProperty('--w',v==='full'?'100%':v+'px');
+    var cw=sheet.offsetWidth; $('wv').textContent=cw+'px';
+    wr.max=Math.min(1600,maxW()); wr.value=Math.min(Math.max(cw,320),+wr.max);
+    vp.querySelectorAll('[data-w]').forEach(function(b){b.setAttribute('aria-pressed',String(String(v)===b.dataset.w))});
+    if(persist)lsSet('md-w',String(v));
+  }
+  function applyFs(p,persist){
+    pct=Math.min(160,Math.max(70,p)); root.style.setProperty('--fs',pct/100); $('fv').textContent=pct+'%';
+    if(persist)lsSet('md-fs',String(pct));
+  }
+  var sw=lsGet('md-w'); applyW(sw==='full'?'full':(+sw>=320?+sw:768)); applyFs(+lsGet('md-fs')||100);
+  vp.querySelectorAll('[data-w]').forEach(function(b){b.addEventListener('click',function(){var w=b.dataset.w;applyW(w==='full'?'full':+w,true)})});
+  wr.addEventListener('input',function(){applyW(+wr.value,true)});
+  $('fm').addEventListener('click',function(){applyFs(pct-10,true)});
+  $('fp').addEventListener('click',function(){applyFs(pct+10,true)});
+  $('rs').addEventListener('click',function(){applyW(768,true);applyFs(100,true)});
+  addEventListener('resize',function(){applyW(vw)});
+  sheet.querySelectorAll('.grip').forEach(function(g){
+    g.addEventListener('pointerdown',function(e){
+      e.preventDefault(); g.setPointerCapture(e.pointerId);
+      drag={x:e.clientX,w:sheet.offsetWidth,s:g.dataset.s,g:g}; g.classList.add('on'); badge.hidden=false; document.body.style.userSelect='none';
+    });
+    g.addEventListener('pointermove',function(e){
+      if(!drag)return;
+      var dx=(e.clientX-drag.x)*(drag.s==='r'?1:-1)*2, w=Math.round(Math.min(maxW(),Math.max(320,drag.w+dx)));
+      applyW(w); badge.textContent=w+' px';
+    });
+    function end(){if(!drag)return; drag.g.classList.remove('on'); lsSet('md-w',String(vw)); drag=null; badge.hidden=true; document.body.style.userSelect=''}
+    g.addEventListener('pointerup',end); g.addEventListener('pointercancel',end);
+    g.addEventListener('dblclick',function(){applyW(768,true)});
+  });
+  $('vpBtn').addEventListener('click',function(e){e.stopPropagation();var o=vp.hidden;vp.hidden=!o;this.setAttribute('aria-expanded',String(o))});
+  document.addEventListener('click',function(e){if(!vp.hidden&&!vp.contains(e.target)){vp.hidden=true;$('vpBtn').setAttribute('aria-expanded','false')}});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){vp.hidden=true;$('vpBtn').setAttribute('aria-expanded','false');closeLib()}});
 
   loadAll();
 })();
