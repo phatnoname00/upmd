@@ -78,18 +78,20 @@
   function open(rec){
     closeNote(true); ttsStop();
     cur=rec; rec.opened=Date.now();
-    baseHTML=DOMPurify.sanitize(marked.parse(rec.text,{gfm:true,breaks:false}));
+    baseHTML=highlightCode(DOMPurify.sanitize(marked.parse(rec.text,{gfm:true,breaks:false})));
     src.textContent=rec.text;
+    $('findBtn').hidden=false; $('exBtn').hidden=false;
     $('name').textContent=rec.name+' · ~'+readMins(rec.text)+' phút đọc'; $('name').title=rec.name;
     document.title=rec.name+' – Trình xem Markdown';
     drop.style.display='none'; view.hidden=false; setMode(false);
     paint(); hideTb(); closeLib(); restorePos(rec); save();
   }
   function closeDoc(){
-    closeNote(true); ttsStop(); hideTb();
+    closeNote(true); ttsStop(); hideTb(); closeFind(); setZen(false);
     cur=null; doc.innerHTML=''; src.textContent=''; plain=''; headOffs=[];
     doc.style.display=src.style.display='none';
     view.hidden=true; $('tocBtn').hidden=true; ttsBtn.hidden=true; $('prog').style.width='0';
+    $('findBtn').hidden=true; $('exBtn').hidden=true; $('ex').hidden=true;
     drop.style.display=''; $('name').textContent='Chưa mở tệp nào'; $('name').title='';
     document.title='Trình xem Markdown'; closeLib(); drawAnnList();
   }
@@ -103,6 +105,20 @@
     buildToc();
     drawAnnList();
     if(!ttsEl.hidden)ttsMark(ttsBlocks()[ttsIdx]);
+    refind();
+  }
+
+  /* Tô màu cú pháp MỘT lần khi mở tệp (không làm ở paint() để khỏi chạy lại mỗi lần thêm chú thích).
+     highlight.js chỉ bọc thêm <span>, không đổi nội dung chữ nên vị trí chú thích vẫn đúng. */
+  function highlightCode(html){
+    if(!window.hljs)return html;
+    var t=document.createElement('template');t.innerHTML=html;
+    t.content.querySelectorAll('pre code').forEach(function(c){
+      var m=/language-([\w+#-]+)/.exec(c.className);
+      if(!m||!hljs.getLanguage(m[1])||c.textContent.length>200000)return;
+      try{c.innerHTML=hljs.highlight(c.textContent,{language:m[1],ignoreIllegals:true}).value;c.classList.add('hljs')}catch(e){}
+    });
+    return t.innerHTML;
   }
 
   /* Tô toàn bộ chú thích trong MỘT lần duyệt văn bản:
@@ -179,7 +195,7 @@
     view.textContent=s?'Xem bản dựng':'Xem mã nguồn'; view.setAttribute('aria-pressed',String(s));
     $('tocBtn').hidden=s; ttsBtn.hidden=s;
     if(s){ttsStop();closeNote(true)}
-    hideTb(); updProg();
+    hideTb(); updProg(); refind();
   }
   function newRec(name,text,id){return {id:id||newId(),name:name,text:text,added:Date.now(),opened:Date.now(),anns:[]}}
 
@@ -578,7 +594,7 @@
     g.addEventListener('pointerup',end); g.addEventListener('pointercancel',end);
     g.addEventListener('dblclick',function(){applyW(768,true)});
   });
-  $('vpBtn').addEventListener('click',function(e){e.stopPropagation();var o=vp.hidden;vp.hidden=!o;this.setAttribute('aria-expanded',String(o))});
+  $('vpBtn').addEventListener('click',function(e){e.stopPropagation();var o=vp.hidden;vp.hidden=!o;this.setAttribute('aria-expanded',String(o));if(o)closeEx()});
   document.addEventListener('click',function(e){if(!vp.hidden&&!vp.contains(e.target)){vp.hidden=true;$('vpBtn').setAttribute('aria-expanded','false')}});
 
   /* ---------- Hình nền: màu/gradient có sẵn hoặc ảnh tự tải lên ---------- */
@@ -861,16 +877,164 @@
     else speechSynthesis.onvoiceschanged=ttsFill;
   }
 
+  /* ---------- Tìm trong tài liệu ----------
+     Dùng CSS Custom Highlight API: tô kết quả mà KHÔNG sửa DOM, nên không đụng tới
+     các thẻ <mark>/<span> chú thích. Tìm không phân biệt dấu và hoa/thường. */
+  var findEl=$('find'),fq=$('fq'),fcEl=$('fc'),FMAX=5000;
+  var hasHL=!!(window.CSS&&CSS.highlights&&window.Highlight);
+  var fIdx=null,fHits=[],fCur=-1,fT;
+  /* Gập chữ về dạng không dấu, đồng thời giữ bảng ánh xạ vị trí về chuỗi gốc
+     (xử lý được cả văn bản dạng NFD, nơi dấu là ký tự riêng). */
+  function foldMap(s){
+    var o=[],map=[],i,c,cc;
+    for(i=0;i<s.length;i++){
+      cc=s.charCodeAt(i); if(cc>=0x300&&cc<=0x36f)continue;
+      c=s.charAt(i);
+      o.push(c==='đ'||c==='Đ'?'d':c.normalize('NFD').charAt(0).toLowerCase().charAt(0)); map.push(i);
+    }
+    return {s:o.join(''),map:map};
+  }
+  function findIndex(){
+    var box=showSource?src:doc,w=document.createTreeWalker(box,NodeFilter.SHOW_TEXT),n,nodes=[],starts=[],parts=[],pos=0;
+    while((n=w.nextNode())){
+      var v=n.nodeValue; if(!v.length||(n.parentNode.closest&&n.parentNode.closest('.cbh')))continue;
+      nodes.push(n);starts.push(pos);parts.push(v);pos+=v.length;
+    }
+    var raw=parts.join('');
+    return {nodes:nodes,starts:starts,raw:raw,f:foldMap(raw)};
+  }
+  function nodeAt(off){var st=fIdx.starts,lo=0,hi=st.length-1;
+    while(lo<hi){var m=(lo+hi+1)>>1;if(st[m]<=off)lo=m;else hi=m-1}return lo}
+  function mkRange(h){
+    var r=document.createRange(),a=nodeAt(h[0]),b=nodeAt(h[1]-1);
+    r.setStart(fIdx.nodes[a],h[0]-fIdx.starts[a]); r.setEnd(fIdx.nodes[b],h[1]-fIdx.starts[b]); return r;
+  }
+  function clearHL(){if(hasHL){CSS.highlights.delete('find');CSS.highlights.delete('find-cur')}}
+  function drawCount(){
+    var q=fq.value.trim();
+    fcEl.textContent=!q?'':fHits.length?(fCur+1)+'/'+fHits.length+(fHits.length>=FMAX?'+':''):'Không thấy';
+    fcEl.classList.toggle('no',!!q&&!fHits.length);
+  }
+  function showCur(scroll){
+    drawCount();
+    if(fCur<0)return;
+    var r=mkRange(fHits[fCur]);
+    if(hasHL){var one=new Highlight(r);one.priority=1;CSS.highlights.set('find-cur',one)}
+    if(scroll){var b=r.getBoundingClientRect(),top=findEl.getBoundingClientRect().bottom+20;
+      if(b.top<top||b.bottom>innerHeight-60)window.scrollBy({top:b.top-innerHeight*.4,behavior:'smooth'})}
+  }
+  /* keep=true: chạy lại sau khi trang được vẽ lại (giữ kết quả đang chọn, không cuộn). */
+  function doFind(keep){
+    var q=foldMap(fq.value.trim()).s,prev=fCur;
+    fHits=[];fCur=-1;clearHL();
+    if(!q||!cur){drawCount();return}
+    if(!fIdx)fIdx=findIndex();
+    var t=fIdx.f.s,map=fIdx.f.map,raw=fIdx.raw,j=0;
+    while(fHits.length<FMAX&&(j=t.indexOf(q,j))>=0){
+      var s=map[j],e=map[j+q.length-1]+1;
+      while(e<raw.length&&raw.charCodeAt(e)>=0x300&&raw.charCodeAt(e)<=0x36f)e++; // kéo theo dấu rời phía sau
+      fHits.push([s,e]); j+=q.length;
+    }
+    if(!fHits.length){drawCount();return}
+    if(hasHL){var all=new Highlight();fHits.forEach(function(h){all.add(mkRange(h))});CSS.highlights.set('find',all)}
+    if(keep&&prev>=0){fCur=Math.min(prev,fHits.length-1);showCur(false);return}
+    // chọn kết quả đầu tiên nằm từ vùng đang xem trở xuống
+    var top=findEl.getBoundingClientRect().bottom+10,lo=0,hi=fHits.length;
+    while(lo<hi){var m=(lo+hi)>>1;if(mkRange(fHits[m]).getBoundingClientRect().top<top)lo=m+1;else hi=m}
+    fCur=lo<fHits.length?lo:0; showCur(true);
+  }
+  function stepFind(d){
+    if(!fHits.length){doFind();return}
+    fCur=(fCur+d+fHits.length)%fHits.length; showCur(true);
+  }
+  function refind(){fIdx=null;if(!findEl.hidden&&cur)doFind(true)}
+  function openFind(){
+    if(!cur)return; setZen(false);
+    findEl.hidden=false; fq.focus(); fq.select();
+    if(fq.value.trim())doFind();
+  }
+  function closeFind(){findEl.hidden=true;fHits=[];fCur=-1;fIdx=null;clearHL();drawCount()}
+  fq.addEventListener('input',function(){clearTimeout(fT);fT=setTimeout(function(){doFind()},150)});
+  fq.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();clearTimeout(fT);
+      if(fCur<0&&fq.value.trim()&&!fHits.length)doFind();else stepFind(e.shiftKey?-1:1)}
+  });
+  $('fNext').addEventListener('click',function(){stepFind(1)});
+  $('fPrev').addEventListener('click',function(){stepFind(-1)});
+  $('fClose').addEventListener('click',closeFind);
+  $('findBtn').addEventListener('click',function(){findEl.hidden?openFind():closeFind()});
+
+  /* ---------- Xuất tài liệu: HTML / Markdown / In ---------- */
+  var exEl=$('ex');
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function closeEx(){exEl.hidden=true;$('exBtn').setAttribute('aria-expanded','false')}
+  $('exBtn').addEventListener('click',function(e){
+    e.stopPropagation();var o=exEl.hidden;exEl.hidden=!o;this.setAttribute('aria-expanded',String(o));
+    if(o){vp.hidden=true;$('vpBtn').setAttribute('aria-expanded','false')}
+  });
+  document.addEventListener('click',function(e){if(!exEl.hidden&&!exEl.contains(e.target))closeEx()});
+  $('exHtml').addEventListener('click',function(){
+    closeEx(); if(!cur)return;
+    var c=doc.cloneNode(true);
+    c.querySelectorAll('.cbh').forEach(function(x){x.remove()});
+    c.querySelectorAll('.speaking,.flash').forEach(function(x){x.classList.remove('speaking','flash')});
+    var nts=sortedAnns().filter(function(a){return a.txt});
+    var foot=nts.length?'<hr><h2>Ghi chú ('+nts.length+')</h2><ol>'+nts.map(function(a){
+      return '<li><blockquote>'+esc(annText(a))+'</blockquote><p>'+esc(a.txt).replace(/\n/g,'<br>')+'</p></li>'}).join('')+'</ol>':'';
+    var font=document.querySelector('link[rel="stylesheet"]'),css=document.querySelector('style').textContent;
+    var html='<!DOCTYPE html>\n<html lang="vi">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n'+
+      '<title>'+esc(cur.name)+'</title>\n'+(font?'<link href="'+esc(font.href)+'" rel="stylesheet">\n':'')+
+      '<style>'+css+'\n#doc{display:block}\n</style>\n</head>\n<body>\n<main><div class="sheet"><article id="doc">'+
+      c.innerHTML+foot+'</article></div></main>\n</body>\n</html>\n';
+    downloadText(cur.name.replace(/\.[^.]*$/,'')+'.html',html,'text/html','Đã xuất bản HTML'+(cur.anns.length?' kèm '+cur.anns.length+' chú thích':''));
+  });
+  $('exMd').addEventListener('click',function(){
+    closeEx(); if(!cur)return;
+    var n=/\.(md|markdown)$/i.test(cur.name)?cur.name:cur.name.replace(/\.[^.]*$/,'')+'.md';
+    downloadText(n,cur.text,'text/markdown','Đã tải "'+n+'"');
+  });
+  $('exPrint').addEventListener('click',function(){
+    closeEx(); if(!cur)return;
+    if(showSource)setMode(false);
+    closeFind(); setTimeout(function(){window.print()},50);
+  });
+
+  /* ---------- Chế độ tập trung ---------- */
+  function setZen(on){
+    var was=document.body.classList.contains('zen');
+    if(on===was)return;
+    document.body.classList.toggle('zen',on);
+    if(on){vp.hidden=true;$('vpBtn').setAttribute('aria-expanded','false');closeEx();closeFind();closeLib();
+      toast('Chế độ tập trung: nhấn F hoặc Esc để thoát')}
+  }
+  $('zenBtn').addEventListener('click',function(){setZen(true)});
+  $('zenX').addEventListener('click',function(){setZen(false)});
+
+  /* ---------- Bảng phím tắt ---------- */
+  var helpEl=$('help');
+  function openHelp(){if(helpEl.open)return;if(helpEl.showModal)helpEl.showModal();else helpEl.setAttribute('open','')}
+  $('helpBtn').addEventListener('click',openHelp);
+  helpEl.addEventListener('click',function(e){if(e.target===helpEl)helpEl.close()}); // bấm ra ngoài để đóng
+
   /* ---------- Phím tắt ---------- */
   document.addEventListener('keydown',function(e){
+    if(helpEl.open)return; // <dialog> tự xử lý Esc
+    var k=(e.key||'').toLowerCase();
     if(e.key==='Escape'){
       if(!snEl.hidden){closeNote(true);return}
       if(tb.style.display==='flex'){if(pend)getSelection().removeAllRanges();hideTb();return}
-      vp.hidden=true;$('vpBtn').setAttribute('aria-expanded','false');closeLib();return;
+      if(!findEl.hidden){closeFind();return}
+      if(document.body.classList.contains('zen')){setZen(false);return}
+      vp.hidden=true;$('vpBtn').setAttribute('aria-expanded','false');closeEx();closeLib();return;
     }
+    if((e.ctrlKey||e.metaKey)&&!e.altKey&&k==='f'&&cur){e.preventDefault();openFind();return}
     var tg=e.target,typing=tg&&(/^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName)||tg.isContentEditable);
-    if(typing||e.ctrlKey||e.metaKey||e.altKey||!cur||showSource)return;
-    var k=(e.key||'').toLowerCase();
+    if(typing||e.ctrlKey||e.metaKey||e.altKey)return;
+    if(e.key==='?'){e.preventDefault();openHelp();return}
+    if(!cur)return;
+    if(e.key==='/'&&!pend){e.preventDefault();openFind();return}
+    if(k==='f'&&!pend){e.preventDefault();setZen(!document.body.classList.contains('zen'));return}
+    if(showSource)return;
     if(pend){
       if(/^[1-4]$/.test(k)){e.preventDefault();addAnn('hl',COLORS[+k-1][0])}
       else if(k==='u'){e.preventDefault();addAnn('ul')}

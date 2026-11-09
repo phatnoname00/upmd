@@ -230,10 +230,64 @@ body.tts-on main{padding-bottom:9rem}
 #doc .cb pre{margin:0; border-radius:0; background:none}
 #doc .cb pre.wrap{white-space:pre-wrap; word-break:break-word}
 #doc .cb .scroll{margin:0}
+
+/* tô màu cú pháp (highlight.js) */
+:root{--hk:#a626a4; --hs:#50a14f; --hc:#848e88; --hn:#b76b01; --ht:#4078f2; --hb:#c18401; --ha:#d1453b}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--hk:#c678dd; --hs:#98c379; --hc:#7f8c86; --hn:#d19a66; --ht:#61afef; --hb:#e5c07b; --ha:#e06c75}
+}
+:root[data-theme="dark"]{--hk:#c678dd; --hs:#98c379; --hc:#7f8c86; --hn:#d19a66; --ht:#61afef; --hb:#e5c07b; --ha:#e06c75}
+.hljs-keyword,.hljs-selector-tag,.hljs-doctag{color:var(--hk)}
+.hljs-string,.hljs-regexp,.hljs-addition,.hljs-meta .hljs-string{color:var(--hs)}
+.hljs-comment,.hljs-quote{color:var(--hc); font-style:italic}
+.hljs-number,.hljs-literal,.hljs-variable,.hljs-template-variable,.hljs-type,.hljs-meta,
+.hljs-selector-class,.hljs-selector-attr,.hljs-selector-pseudo,.hljs-params{color:var(--hn)}
+.hljs-meta .hljs-keyword{color:var(--hk)}
+.hljs-title,.hljs-section,.hljs-title.function_{color:var(--ht)}
+.hljs-built_in,.hljs-title.class_,.hljs-class .hljs-title{color:var(--hb)}
+.hljs-name,.hljs-tag,.hljs-deletion,.hljs-selector-id,.hljs-attr,.hljs-attribute,.hljs-symbol,.hljs-bullet,.hljs-link{color:var(--ha)}
+.hljs-emphasis{font-style:italic} .hljs-strong{font-weight:700}
+
+/* tìm trong tài liệu */
+#find{flex:1 1 100%; display:flex; gap:.4rem; align-items:center}
+#find[hidden]{display:none}
+#fq{flex:1; min-width:0; font:inherit; padding:.4rem .6rem; border:1px solid var(--line); border-radius:6px; background:var(--bg1); color:var(--ink)}
+#fc{min-width:4.5rem; text-align:center; color:var(--muted); font-size:.85rem; font-variant-numeric:tabular-nums}
+#fc.no{color:var(--danger)}
+#find button{padding:.4rem .6rem; line-height:1}
+::highlight(find){background-color:rgba(255,170,0,.33); color:inherit}
+::highlight(find-cur){background-color:#ff9632; color:#1a1200}
+
+/* menu xuất tệp */
+#ex{position:absolute; right:.75rem; top:calc(100% + .4rem); z-index:40; width:min(18rem,calc(100vw - 1.5rem)); padding:.5rem;
+  display:flex; flex-direction:column; gap:.35rem; background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 28px rgba(0,0,0,.3)}
+#ex[hidden]{display:none}
+#ex button{text-align:left; padding:.5rem .7rem; border-color:transparent}
+#ex button:hover{border-color:var(--accent)}
+#ex small{display:block; color:var(--muted); font-size:.78rem}
+
+/* chế độ tập trung */
+body.zen .bar{display:none}
+body.zen #sky{opacity:.35}
+#zenX{position:fixed; z-index:6; top:calc(env(safe-area-inset-top,0px) + .6rem); right:.8rem; opacity:.4; font-family:system-ui,sans-serif; font-size:.85rem}
+#zenX:hover,#zenX:focus-visible{opacity:1}
+body:not(.zen) #zenX{display:none}
+
+/* bảng phím tắt */
+#help{border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--ink); padding:1.2rem 1.4rem;
+  width:min(30rem,calc(100vw - 2rem)); max-height:calc(100vh - 2rem); font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+#help::backdrop{background:rgba(0,0,0,.45)}
+#help h2{margin:0 0 .5rem; font-size:1.15rem}
+#help h3{margin:1rem 0 .3rem; font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted)}
+#help table{width:100%; border-collapse:collapse; font-size:.9rem}
+#help td{padding:.32rem .2rem; border-bottom:1px solid var(--line); vertical-align:top}
+#help td:first-child{white-space:nowrap; width:1%; padding-right:1rem}
+#help form{margin-top:1rem; text-align:right}
+
 @media print{
-  .bar,.side,#prog,#sky,#scrim,#tb,.grip,#wbadge,#toast,#sn,#tts,.cbh{display:none}
+  .bar,.side,#prog,#sky,#scrim,#tb,.grip,#wbadge,#toast,#sn,#tts,.cbh,#zenX,#help{display:none}
   body{background:#fff; color:#000} .sheet{border:0; background:none; width:100%}
-  .a.hn.last::after{content:none}
+  .a.hn.last::after{content:" [" attr(title) "]"; font-size:.8em; color:#555; vertical-align:baseline; line-height:inherit; font-style:italic}
 }
 </style>
 </head>
@@ -244,6 +298,7 @@ body.tts-on main{padding-bottom:9rem}
   <button id="libBtn" aria-expanded="false">Thư viện</button>
   <span class="name" id="name">Chưa mở tệp nào</span>
   <button id="view" aria-pressed="false" hidden>Xem mã nguồn</button>
+  <button id="findBtn" title="Tìm trong tài liệu (Ctrl+F hoặc /)" hidden>Tìm</button>
   <button id="tocBtn" aria-expanded="false" title="Mục lục và chú thích (phím T)" hidden>Mục lục</button>
   <button id="ttsBtn" aria-pressed="false" title="Đọc thành tiếng từ đoạn đang xem" hidden>Đọc</button>
   <button id="vpBtn" aria-expanded="false">Hiển thị</button>
@@ -261,12 +316,50 @@ body.tts-on main{padding-bottom:9rem}
       <div class="row"><button id="bgUp">Tải ảnh lên</button><button id="bgRm" disabled>Xóa ảnh</button></div>
       <input id="bgfile" type="file" accept="image/*" hidden>
     </div>
+    <button class="rs" id="zenBtn">Chế độ tập trung (phím F)</button>
     <button class="rs" id="rs">Đặt lại kích thước</button>
   </div>
+  <button id="exBtn" aria-expanded="false" hidden>Xuất</button>
+  <div id="ex" hidden role="menu" aria-label="Xuất tài liệu">
+    <button id="exHtml" role="menuitem">Tải bản HTML<small>Giữ nguyên highlight, kèm danh sách ghi chú</small></button>
+    <button id="exMd" role="menuitem">Tải tệp Markdown gốc<small>Nội dung .md như lúc mở</small></button>
+    <button id="exPrint" role="menuitem">In / lưu PDF<small>Ghi chú được in kèm trong ngoặc</small></button>
+  </div>
   <button id="theme">Đổi giao diện</button>
+  <button id="helpBtn" title="Phím tắt (?)" aria-label="Phím tắt">?</button>
   <label class="btn primary" for="file">Mở tệp .md</label>
   <input id="file" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple hidden>
+  <div id="find" hidden role="search">
+    <input id="fq" type="search" placeholder="Tìm trong tài liệu (không cần gõ dấu)" aria-label="Tìm trong tài liệu" autocomplete="off">
+    <span id="fc" aria-live="polite"></span>
+    <button id="fPrev" aria-label="Kết quả trước (Shift+Enter)" title="Kết quả trước (Shift+Enter)">↑</button>
+    <button id="fNext" aria-label="Kết quả sau (Enter)" title="Kết quả sau (Enter)">↓</button>
+    <button id="fClose" aria-label="Đóng tìm kiếm (Esc)" title="Đóng (Esc)">✕</button>
+  </div>
 </div>
+<button id="zenX" title="Thoát chế độ tập trung (F hoặc Esc)">Thoát tập trung</button>
+
+<dialog id="help" aria-label="Phím tắt">
+  <h2>Phím tắt</h2>
+  <h3>Khi đang bôi đen chữ</h3>
+  <table>
+    <tr><td><kbd>1</kbd>–<kbd>4</kbd></td><td>Highlight vàng, xanh lá, xanh dương, hồng</td></tr>
+    <tr><td><kbd>U</kbd></td><td>Gạch chân</td></tr>
+    <tr><td><kbd>N</kbd></td><td>Thêm ghi chú giấy note</td></tr>
+    <tr><td><kbd>R</kbd></td><td>Đọc thành tiếng từ đoạn này</td></tr>
+  </table>
+  <h3>Khi đang đọc</h3>
+  <table>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd> hoặc <kbd>/</kbd></td><td>Tìm trong tài liệu (<kbd>Enter</kbd> tiếp, <kbd>Shift</kbd>+<kbd>Enter</kbd> lùi)</td></tr>
+    <tr><td><kbd>T</kbd></td><td>Mục lục</td></tr>
+    <tr><td><kbd>A</kbd></td><td>Danh sách chú thích</td></tr>
+    <tr><td><kbd>F</kbd></td><td>Bật / tắt chế độ tập trung</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td><td>Lưu ghi chú đang viết</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Đóng bảng, thanh tìm kiếm, chế độ tập trung</td></tr>
+    <tr><td><kbd>?</kbd></td><td>Mở bảng này</td></tr>
+  </table>
+  <form method="dialog"><button class="primary">Đóng</button></form>
+</dialog>
 <div id="scrim"></div>
 
 <aside id="lib" class="side" aria-label="Thư viện tệp">
@@ -330,7 +423,8 @@ body.tts-on main{padding-bottom:9rem}
       <button id="pasteBtn">Dán nội dung</button>
       <textarea id="paste" placeholder="Dán Markdown vào đây" aria-label="Dán Markdown"></textarea>
       <p class="keys">Khi đang bôi đen: <kbd>1</kbd>–<kbd>4</kbd> highlight, <kbd>U</kbd> gạch chân, <kbd>N</kbd> ghi chú, <kbd>R</kbd> đọc từ đây.<br>
-        Khi đọc: <kbd>T</kbd> mục lục, <kbd>A</kbd> danh sách chú thích, <kbd>Esc</kbd> đóng.</p>
+        Khi đọc: <kbd>Ctrl</kbd>+<kbd>F</kbd> tìm, <kbd>T</kbd> mục lục, <kbd>A</kbd> danh sách chú thích, <kbd>F</kbd> tập trung, <kbd>Esc</kbd> đóng.<br>
+        Nhấn <kbd>?</kbd> để xem tất cả phím tắt.</p>
     </section>
     <article id="doc"></article>
     <pre id="src"></pre>
@@ -339,6 +433,7 @@ body.tts-on main{padding-bottom:9rem}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
