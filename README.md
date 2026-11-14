@@ -45,6 +45,8 @@ Không cần tài khoản. Không cần cài đặt. Không tải gì lên máy 
 | 🔠 | **Chỉnh cỡ chữ** | Tăng giảm cỡ chữ linh hoạt, có nút đặt lại mặc định. |
 | 🌗 | **Đổi giao diện** | Chuyển theme sáng/tối tùy thói quen đọc. |
 | 🔍 | **Tìm trong tài liệu** | `Ctrl+F` hoặc `/` để tìm, không cần gõ dấu, `Enter` / `Shift+Enter` để chuyển kết quả. |
+| 🧷 | **Chú thích không bị mất khi sửa tệp** | Mở bản mới của tệp, highlight và ghi chú tự gắn lại đúng đoạn. Đoạn nào đã bị xóa sẽ vào mục *Bị lạc* để gắn lại bằng tay. |
+| ∑ | **Công thức toán & sơ đồ** | Hỗ trợ `$...$`, `$$...$$` (KaTeX) và khối ` ```mermaid `. Thư viện chỉ tải khi tài liệu cần. |
 | 🎨 | **Tô màu code** | Khối code có khai báo ngôn ngữ được tô màu cú pháp, hợp cả nền sáng lẫn tối. |
 | 📤 | **Xuất tài liệu** | Tải bản HTML giữ nguyên highlight kèm danh sách ghi chú, tải lại tệp `.md`, hoặc in / lưu PDF. |
 | 🧘 | **Chế độ tập trung** | Nhấn `F` để ẩn thanh công cụ, chỉ còn lại nội dung. |
