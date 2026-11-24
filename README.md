@@ -49,6 +49,11 @@ Không cần tài khoản. Không cần cài đặt. Không tải gì lên máy 
 | ∑ | **Công thức toán & sơ đồ** | Hỗ trợ `$...$`, `$$...$$` (KaTeX) và khối ` ```mermaid `. Thư viện chỉ tải khi tài liệu cần. |
 | 🎨 | **Tô màu code** | Khối code có khai báo ngôn ngữ được tô màu cú pháp, hợp cả nền sáng lẫn tối. |
 | 📤 | **Xuất tài liệu** | Tải bản HTML giữ nguyên highlight kèm danh sách ghi chú, tải lại tệp `.md`, hoặc in / lưu PDF. |
+| 📑 | **Mục lục bên phải như trình đọc PDF** | Trên màn hình rộng, mục lục và chú thích luôn hiện cạnh tài liệu, tự tô mục đang đọc. Kéo mép để đổi độ rộng, thu gọn khi cần. |
+| 🧭 | **Chuyển mục nhanh** | `J` / `K` tới mục sau / trước, `G` để gõ tên mục và nhảy tới. Thanh trạng thái cho biết mục, % đã đọc và thời gian còn lại. |
+| 🔗 | **Link tới từng mục** | Nút link cạnh mỗi tiêu đề. Tải lại trang vẫn mở đúng tài liệu và mục đang xem. |
+| 🖼️ | **Phóng to ảnh** | Bấm vào ảnh để xem lớn, `←` / `→` chuyển ảnh, `Z` phóng to. |
+| 🔤 | **Phông chữ & giãn dòng** | Có chân, không chân, phông dễ đọc (Atkinson Hyperlegible) hoặc đơn cách; 4 mức giãn dòng. |
 | 🧘 | **Chế độ tập trung** | Nhấn `F` để ẩn thanh công cụ, chỉ còn lại nội dung. |
 | ⌨️ | **Bảng phím tắt** | Nhấn `?` để xem toàn bộ phím tắt. |
 | 🔒 | **Riêng tư tuyệt đối** | Tệp được đọc và lưu ngay trên trình duyệt, **không tải lên đâu cả**. |
