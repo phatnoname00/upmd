@@ -415,12 +415,70 @@ body.tts-on #st{display:none}
 #vp .seg button{padding:.35rem .2rem; font-size:.8rem; border-radius:7px}
 #vp .seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
 
+/* thu gọn / mở rộng từng mục */
+#doc .fh{display:none}
+.hfold{position:absolute; left:-1.55rem; top:50%; translate:0 -50%; width:1.35rem; height:1.35rem; padding:0; border:0; border-radius:6px;
+  background:none; color:var(--muted); line-height:0; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .15s,background-color .15s}
+.hfold svg{width:1rem; height:1rem; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; transition:transform .2s var(--ease)}
+#doc h1:hover .hfold,#doc h2:hover .hfold,#doc h3:hover .hfold,#doc h4:hover .hfold,.hfold:focus-visible,#doc .folded .hfold{opacity:1}
+#doc .folded .hfold svg{transform:rotate(-90deg)}
+.hfold:hover{background:var(--hover); color:var(--ink)}
+.hfold:active:not(:disabled){transform:none}
+#doc .folded::after{content:attr(data-n); margin-left:.6rem; padding:.15rem .55rem; border-radius:999px; vertical-align:middle;
+  background:var(--hover); color:var(--muted); font:500 .7rem system-ui,-apple-system,"Segoe UI",sans-serif; white-space:nowrap}
+#doc h1.folded{border-bottom-style:dashed}
+@media (max-width:520px){.hfold{left:-1.15rem; width:1.1rem}}
+@media (pointer:coarse){.hfold{opacity:.55}}
+#tocTools[hidden]{display:none}
+#tocTools button{font-size:.82rem}
+#tocList a.infold{opacity:.45}
+#tocList a.isfold::after{content:" ▸"; color:var(--muted)}
+
+/* khung chú ý kiểu GitHub: > [!NOTE] … */
+.co-note{--cc:#0969da} .co-tip{--cc:#1a7f37} .co-important{--cc:#8250df} .co-warning{--cc:#9a6700} .co-caution{--cc:#cf222e}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .co-note{--cc:#4493f8} :root:not([data-theme="light"]) .co-tip{--cc:#3fb950}
+  :root:not([data-theme="light"]) .co-important{--cc:#ab7df8} :root:not([data-theme="light"]) .co-warning{--cc:#d29922}
+  :root:not([data-theme="light"]) .co-caution{--cc:#f85149}
+}
+:root[data-theme="dark"] .co-note{--cc:#4493f8} :root[data-theme="dark"] .co-tip{--cc:#3fb950} :root[data-theme="dark"] .co-important{--cc:#ab7df8}
+:root[data-theme="dark"] .co-warning{--cc:#d29922} :root[data-theme="dark"] .co-caution{--cc:#f85149}
+#doc blockquote.callout{border-left:4px solid var(--cc); border-radius:0 8px 8px 0; padding:.65rem 1rem; color:var(--ink);
+  background:color-mix(in srgb,var(--cc) 8%,transparent)}
+#doc blockquote.callout>:last-child{margin-bottom:0}
+#doc .co-t{display:flex; align-items:center; gap:.45rem; margin:0 0 .35rem; color:var(--cc); font:700 .86rem system-ui,-apple-system,"Segoe UI",sans-serif}
+#doc .co-t::before{display:inline-grid; place-items:center; width:1.15rem; height:1.15rem; border:2px solid currentColor; border-radius:50%; font-size:.72rem; line-height:1}
+.co-note .co-t::before{content:"i"} .co-tip .co-t::before{content:"✓"} .co-important .co-t::before{content:"!"}
+.co-warning .co-t::before{content:"!"; border-radius:3px} .co-caution .co-t::before{content:"✕"}
+
+/* chú thích cuối trang [^1] */
+#doc .fnref{font-size:.72em; line-height:0; margin-left:.12em}
+#doc .fnref a{text-decoration:none; padding:0 .2em; border-radius:4px; font-weight:600}
+#doc .fnref a:hover{background:var(--hover)}
+#doc .footnotes{font-size:.9em; color:var(--muted)}
+#doc .footnotes hr{margin:2.5rem 0 1rem}
+#doc .footnotes li{margin-bottom:.35rem}
+#doc .fnback{text-decoration:none; margin-left:.25rem}
+#doc .tflash{animation:fl 1.6s ease; border-radius:4px}
+
+/* mở từ link */
+#urlDlg{width:min(34rem,calc(100vw - 2rem)); padding:1.1rem 1.2rem; border:1px solid var(--line); border-radius:14px; background:var(--panel); color:var(--ink);
+  box-shadow:var(--shadow); font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+#urlDlg h2{margin:0 0 .75rem; font-size:1.1rem}
+#urlIn{width:100%; font:inherit; padding:.6rem .75rem; border:1px solid var(--line); border-radius:10px; background:var(--bg1); color:var(--ink); outline:none}
+#urlIn:focus{border-color:var(--accent)}
+#urlDlg .hint{margin:.55rem 0 0; font-size:.8rem; line-height:1.5; color:var(--muted)}
+#urlDlg .err{margin:.6rem 0 0; font-size:.86rem; line-height:1.5; color:var(--danger)}
+#urlDlg .err[hidden]{display:none}
+#urlDlg .row{display:flex; justify-content:flex-end; gap:.5rem; margin-top:1rem}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important; transition:none!important}
 }
 
 @media print{
-  .bar,.side,#prog,#sky,#scrim,#tb,.grip,#wbadge,#toast,#sn,#tts,.cbh,#zenX,#help,#st,.hlink,#goto,#lb{display:none!important}
+  .bar,.side,#prog,#sky,#scrim,#tb,.grip,#wbadge,#toast,#sn,#tts,.cbh,#zenX,#help,#st,.hlink,.hfold,#goto,#lb,#urlDlg{display:none!important}
+  #doc .fh{display:revert!important} #doc .folded::after{content:none}
   body.dock main{padding-right:1rem}
   body{background:#fff; color:#000} .sheet{border:0; background:none; width:100%}
   .a.hn.last::after{content:" [" attr(title) "]"; font-size:.8em; color:#555; vertical-align:baseline; line-height:inherit; font-style:italic}
@@ -524,6 +582,7 @@ body.tts-on #st{display:none}
     <select id="sort" aria-label="Sắp xếp"><option value="opened">Mới mở</option><option value="added">Mới thêm</option><option value="name">Tên A–Z</option></select>
   </div>
   <ul id="list"></ul>
+  <div class="tools"><button id="libUrl" title="Mở tệp Markdown từ link GitHub, GitLab hoặc link trực tiếp">Mở từ link</button></div>
   <div class="tools"><button id="bkOut" title="Tải về toàn bộ thư viện và chú thích (.json)">Sao lưu</button><button id="bkIn" title="Nhập lại từ tệp sao lưu">Khôi phục</button></div>
   <input id="bkfile" type="file" accept=".json,application/json" hidden>
   <button id="closeLib">Đóng</button>
@@ -534,6 +593,10 @@ body.tts-on #st{display:none}
   <div class="tabs" role="tablist">
     <button id="tabToc" role="tab" aria-selected="true">Mục lục</button>
     <button id="tabAnn" role="tab" aria-selected="false">Chú thích <span id="annN"></span></button>
+  </div>
+  <div class="tools" id="tocTools">
+    <button id="foldAll" title="Thu gọn tất cả các mục, chỉ còn tiêu đề">Thu gọn hết</button>
+    <button id="unfoldAll" title="Mở rộng tất cả các mục">Mở hết</button>
   </div>
   <ul id="tocList"></ul>
   <div id="annBox" hidden>
@@ -555,6 +618,16 @@ body.tts-on #st{display:none}
   <input id="gq" type="search" placeholder="Gõ tên mục để lọc (không cần dấu)…" aria-label="Lọc mục" autocomplete="off">
   <ul id="gl" role="listbox" aria-label="Danh sách mục"></ul>
   <p class="gk"><kbd>↑</kbd> <kbd>↓</kbd> chọn · <kbd>Enter</kbd> đi tới · <kbd>Esc</kbd> đóng</p>
+</dialog>
+
+<dialog id="urlDlg" aria-label="Mở tệp từ link">
+  <form id="urlForm">
+    <h2>Mở tệp Markdown từ link</h2>
+    <input id="urlIn" type="text" inputmode="url" placeholder="https://github.com/ten/du-an/blob/main/README.md" aria-label="Đường link" autocomplete="off" spellcheck="false">
+    <p class="hint">Dán link tới tệp trên GitHub, GitLab, Gist, hoặc link trực tiếp tới tệp .md. Dán link trang chủ dự án GitHub sẽ mở tệp README. Ảnh và link tương đối trong tệp sẽ tự trỏ đúng chỗ.</p>
+    <p class="err" id="urlErr" role="alert" hidden></p>
+    <div class="row"><button type="button" id="urlCancel">Hủy</button><button type="submit" class="primary" id="urlGo">Mở</button></div>
+  </form>
 </dialog>
 
 <dialog id="lb" aria-label="Xem ảnh">
@@ -596,6 +669,7 @@ body.tts-on #st{display:none}
       <h1>Xem tệp Markdown</h1>
       <p>Kéo tệp .md vào đây hoặc chọn từ máy. Tệp được đọc và lưu ngay trên trình duyệt, không tải lên đâu cả. Bôi đen chữ để highlight, gạch chân, ghi chú hoặc nghe đọc.</p>
       <button class="primary" id="pick">Chọn tệp</button>
+      <button id="urlBtn">Mở từ link</button>
       <button id="pasteBtn">Dán nội dung</button>
       <textarea id="paste" placeholder="Dán Markdown vào đây" aria-label="Dán Markdown"></textarea>
       <p class="keys">Khi đang bôi đen: <kbd>1</kbd>–<kbd>4</kbd> highlight, <kbd>U</kbd> gạch chân, <kbd>N</kbd> ghi chú, <kbd>R</kbd> đọc từ đây.<br>

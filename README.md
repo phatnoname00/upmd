@@ -53,6 +53,9 @@ Không cần tài khoản. Không cần cài đặt. Không tải gì lên máy 
 | 🧭 | **Chuyển mục nhanh** | `J` / `K` tới mục sau / trước, `G` để gõ tên mục và nhảy tới. Thanh trạng thái cho biết mục, % đã đọc và thời gian còn lại. |
 | 🔗 | **Link tới từng mục** | Nút link cạnh mỗi tiêu đề. Tải lại trang vẫn mở đúng tài liệu và mục đang xem. |
 | 🖼️ | **Phóng to ảnh** | Bấm vào ảnh để xem lớn, `←` / `→` chuyển ảnh, `Z` phóng to. |
+| 🪗 | **Thu gọn từng mục** | Bấm mũi tên cạnh tiêu đề để ẩn/hiện cả mục; có nút *Thu gọn hết / Mở hết* trong mục lục. Trạng thái được nhớ theo từng tài liệu. |
+| 💬 | **Khung chú ý & chú thích cuối trang** | Hỗ trợ `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]` và chú thích `[^1]` như trên GitHub. |
+| 🌐 | **Mở tệp từ link** | Dán link GitHub, GitLab, Gist hoặc link trực tiếp tới tệp `.md`. Ảnh và link tương đối tự trỏ đúng; bấm link tới tệp `.md` khác sẽ mở ngay trong ứng dụng. |
 | 🔤 | **Phông chữ & giãn dòng** | Có chân, không chân, phông dễ đọc (Atkinson Hyperlegible) hoặc đơn cách; 4 mức giãn dòng. |
 | 🧘 | **Chế độ tập trung** | Nhấn `F` để ẩn thanh công cụ, chỉ còn lại nội dung. |
 | ⌨️ | **Bảng phím tắt** | Nhấn `?` để xem toàn bộ phím tắt. |
