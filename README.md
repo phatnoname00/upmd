@@ -56,6 +56,10 @@ Không cần tài khoản. Không cần cài đặt. Không tải gì lên máy 
 | 🪗 | **Thu gọn từng mục** | Bấm mũi tên cạnh tiêu đề để ẩn/hiện cả mục; có nút *Thu gọn hết / Mở hết* trong mục lục. Trạng thái được nhớ theo từng tài liệu. |
 | 💬 | **Khung chú ý & chú thích cuối trang** | Hỗ trợ `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]` và chú thích `[^1]` như trên GitHub. |
 | 🌐 | **Mở tệp từ link** | Dán link GitHub, GitLab, Gist hoặc link trực tiếp tới tệp `.md`. Ảnh và link tương đối tự trỏ đúng; bấm link tới tệp `.md` khác sẽ mở ngay trong ứng dụng. |
+| 🗃️ | **Mở cả thư mục, hiện đủ ảnh** | Bấm *Mở thư mục* hoặc kéo thư mục vào trang: ảnh dùng đường dẫn tương đối hiện đúng, link giữa các tệp `.md` bấm là mở. Chỉ lưu những ảnh tài liệu thật sự dùng. |
+| 📖 | **Tra từ nhanh** | Bôi đen rồi bấm *Tra* (phím `L`): từ điển, Google Dịch, Wikipedia, Google. |
+| 🗂️ | **Nhiều tab tài liệu** | Mở nhiều tệp cùng lúc như tab trình duyệt, mỗi tab nhớ chỗ đang đọc. `[` / `]` để chuyển tab. |
+| 📲 | **Cài như ứng dụng** | Cài UPMD lên máy tính / điện thoại, mở được khi không có mạng; trên Windows có thể chuột phải tệp `.md` → *Mở bằng UPMD*. |
 | 🔤 | **Phông chữ & giãn dòng** | Có chân, không chân, phông dễ đọc (Atkinson Hyperlegible) hoặc đơn cách; 4 mức giãn dòng. |
 | 🧘 | **Chế độ tập trung** | Nhấn `F` để ẩn thanh công cụ, chỉ còn lại nội dung. |
 | ⌨️ | **Bảng phím tắt** | Nhấn `?` để xem toàn bộ phím tắt. |
@@ -87,7 +91,12 @@ Dữ liệu của bạn thuộc về bạn.
 - Thư viện và chú thích chỉ lưu **cục bộ trên thiết bị** đang dùng.
 - Không đăng ký, không theo dõi nội dung bạn đọc.
 
-> ℹ️ Vì dữ liệu lưu trong trình duyệt, hãy giữ bản gốc của tệp `.md` để không mất nội dung nếu bạn xóa dữ liệu trình duyệt.
+> ℹ️ Vì dữ liệu lưu trong trình duyệt, hãy giữ bản gốc của tệp `.md` để không mất nội dung nếu bạn xóa dữ liệu trình duyệt. Muốn chuyển thư viện sang máy khác, dùng nút **Sao lưu / Khôi phục** trong Thư viện.
+
+**Khi bạn tự dùng một số tính năng**, dữ liệu sẽ đi ra ngoài như sau:
+
+- **Giọng đọc "Online (Natural)" của Edge**: chữ đang đọc được Microsoft xử lý qua mạng.
+- **Tra từ / Mở từ link**: chỉ gửi đoạn chữ bạn chọn hoặc tải tệp từ link bạn dán.
 
 ---
 

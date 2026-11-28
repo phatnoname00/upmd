@@ -1,0 +1,30 @@
+{
+  "name": "UPMD – Trình xem Markdown",
+  "short_name": "UPMD",
+  "description": "Đọc, highlight và ghi chú tệp Markdown ngay trên trình duyệt, dùng được cả khi không có mạng.",
+  "lang": "vi",
+  "dir": "ltr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#1a1a1a",
+  "categories": ["productivity", "education", "books"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": {
+        "text/markdown": [".md", ".markdown"],
+        "text/plain": [".txt"]
+      }
+    }
+  ],
+  "launch_handler": { "client_mode": "focus-existing" }
+}

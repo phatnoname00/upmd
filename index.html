@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Trình xem Markdown</title>
+<meta name="description" content="UPMD: đọc, highlight và ghi chú tệp Markdown ngay trên trình duyệt">
+<meta name="theme-color" content="#1a1a1a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="UPMD">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,700;1,7..72,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -155,6 +162,8 @@ span.nt{background:rgba(255,226,60,.5); border-bottom:2px dotted #c9a300; cursor
 #tb .rm{color:var(--danger); font-size:.82rem}
 #tb button.ok,#annBox button.ok{color:var(--accent); border-color:var(--accent)}
 #tb .sep{width:1px; align-self:stretch; background:var(--line)}
+#tb a.btn{padding:.25rem .55rem; line-height:1.2; text-decoration:none; font-size:.82rem; font-weight:600}
+#tb .lkq{max-width:14rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.8rem; color:var(--muted); padding:0 .2rem}
 
 /* tờ giấy note */
 #sn{position:fixed; z-index:35; width:min(17rem,calc(100vw - 1rem)); padding:.8rem .8rem .6rem; background:#fff176; color:#3b3200;
@@ -328,6 +337,18 @@ body.has-doc .vsep{display:block}
 @media (max-width:520px){.openbtn .lb2{display:none} .openbtn{padding:.42rem .55rem} .bar .name{flex-basis:4rem}}
 #find{padding-top:.3rem}
 
+/* tab tài liệu */
+.tabsbar{flex:1 1 100%; display:flex; gap:.3rem; overflow-x:auto; padding:.3rem 0 .05rem; scrollbar-width:thin}
+.tabsbar[hidden],body:not(.has-doc) .tabsbar{display:none}
+.tab{display:flex; align-items:center; flex:0 1 13rem; min-width:6.5rem; border:1px solid var(--line); border-radius:8px; background:transparent; transition:background-color .15s,border-color .15s}
+.tab:hover{background:var(--hover)}
+.tab.on{background:var(--panel); border-color:var(--accent); box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.tab .tt{flex:1; min-width:0; border:0; background:none; padding:.3rem .2rem .3rem .65rem; text-align:left; font-size:.82rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--muted)}
+.tab.on .tt{color:var(--ink); font-weight:600}
+.tab .tx{border:0; background:none; padding:.1rem .45rem; margin-right:.15rem; font-size:1rem; line-height:1; color:var(--muted); border-radius:6px; opacity:.6}
+.tab:hover .tx,.tab.on .tx{opacity:1}
+.tab .tx:hover{background:var(--hover); color:var(--danger)}
+
 /* menu, thanh nổi: xuất hiện nhẹ nhàng */
 @keyframes pop{from{opacity:0; translate:0 -6px; scale:.98}}
 @keyframes rise{from{opacity:0; translate:0 10px}}
@@ -396,6 +417,8 @@ body.tts-on #st{display:none}
 
 /* xem ảnh phóng to */
 #doc img{cursor:zoom-in} #doc a img{cursor:pointer}
+#doc img.missing{display:inline-block; min-width:8rem; min-height:2.2rem; padding:.4rem .6rem; border:1px dashed var(--danger); border-radius:6px;
+  color:var(--danger); font:.8rem system-ui,sans-serif; cursor:help}
 #lb{width:100vw; height:100vh; max-width:none; max-height:none; margin:0; padding:0; border:0; background:rgba(10,10,10,.92); color:#eee; font-family:system-ui,sans-serif}
 #lb::backdrop{background:transparent}
 .lbbar{position:absolute; left:0; right:0; top:0; display:flex; gap:.4rem; align-items:center; padding:calc(env(safe-area-inset-top,0px) + .5rem) .7rem .5rem; z-index:1}
@@ -471,6 +494,9 @@ body.tts-on #st{display:none}
 #urlDlg .err{margin:.6rem 0 0; font-size:.86rem; line-height:1.5; color:var(--danger)}
 #urlDlg .err[hidden]{display:none}
 #urlDlg .row{display:flex; justify-content:flex-end; gap:.5rem; margin-top:1rem}
+
+/* nút cài ứng dụng */
+.side .tools button[hidden]{display:none}
 
 /* giọng đọc: tên giọng đang dùng + hướng dẫn cài giọng Việt */
 .ttnow{flex:1 1 100%; font-size:.78rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 .2rem}
@@ -563,6 +589,7 @@ body.tts-on #st{display:none}
     <button id="fNext" aria-label="Kết quả sau (Enter)" title="Kết quả sau (Enter)">↓</button>
     <button id="fClose" aria-label="Đóng tìm kiếm (Esc)" title="Đóng (Esc)">✕</button>
   </div>
+  <div id="tabs" class="tabsbar" hidden role="tablist" aria-label="Tài liệu đang mở"></div>
 </div>
 <button id="zenX" title="Thoát chế độ tập trung (F hoặc Esc)">Thoát tập trung</button>
 
@@ -574,12 +601,14 @@ body.tts-on #st{display:none}
     <tr><td><kbd>U</kbd></td><td>Gạch chân</td></tr>
     <tr><td><kbd>N</kbd></td><td>Thêm ghi chú giấy note</td></tr>
     <tr><td><kbd>R</kbd></td><td>Đọc thành tiếng từ đoạn này</td></tr>
+    <tr><td><kbd>L</kbd></td><td>Tra từ điển, dịch, Wikipedia, Google</td></tr>
   </table>
   <h3>Khi đang đọc</h3>
   <table>
     <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd> hoặc <kbd>/</kbd></td><td>Tìm trong tài liệu (<kbd>Enter</kbd> tiếp, <kbd>Shift</kbd>+<kbd>Enter</kbd> lùi)</td></tr>
     <tr><td><kbd>J</kbd> / <kbd>K</kbd></td><td>Tới mục sau / mục trước</td></tr>
     <tr><td><kbd>G</kbd></td><td>Đi tới mục (gõ tên để lọc)</td></tr>
+    <tr><td><kbd>[</kbd> / <kbd>]</kbd></td><td>Chuyển sang tab tài liệu trước / sau</td></tr>
     <tr><td><kbd>T</kbd></td><td>Bật / tắt mục lục</td></tr>
     <tr><td><kbd>A</kbd></td><td>Danh sách chú thích</td></tr>
     <tr><td><kbd>F</kbd></td><td>Bật / tắt chế độ tập trung</td></tr>
@@ -600,9 +629,11 @@ body.tts-on #st{display:none}
     <select id="sort" aria-label="Sắp xếp"><option value="opened">Mới mở</option><option value="added">Mới thêm</option><option value="name">Tên A–Z</option></select>
   </div>
   <ul id="list"></ul>
-  <div class="tools"><button id="libUrl" title="Mở tệp Markdown từ link GitHub, GitLab hoặc link trực tiếp">Mở từ link</button></div>
+  <div class="tools"><button id="libDir" title="Mở cả thư mục (tệp .md kèm ảnh)">Mở thư mục</button><button id="libUrl" title="Mở tệp Markdown từ link GitHub, GitLab hoặc link trực tiếp">Mở từ link</button></div>
+  <input id="dirIn" type="file" webkitdirectory multiple hidden>
   <div class="tools"><button id="bkOut" title="Tải về toàn bộ thư viện và chú thích (.json)">Sao lưu</button><button id="bkIn" title="Nhập lại từ tệp sao lưu">Khôi phục</button></div>
   <input id="bkfile" type="file" accept=".json,application/json" hidden>
+  <div class="tools"><button id="installBtn" hidden title="Cài UPMD như một ứng dụng, đọc được khi không có mạng">Cài ứng dụng</button></div>
   <button id="closeLib">Đóng</button>
 </aside>
 
@@ -699,8 +730,10 @@ body.tts-on #st{display:none}
       <h1>Xem tệp Markdown</h1>
       <p>Kéo tệp .md vào đây hoặc chọn từ máy. Tệp được đọc và lưu ngay trên trình duyệt, không tải lên đâu cả. Bôi đen chữ để highlight, gạch chân, ghi chú hoặc nghe đọc.</p>
       <button class="primary" id="pick">Chọn tệp</button>
+      <button id="dirBtn" title="Chọn cả thư mục để hiện được ảnh trong tệp">Mở thư mục</button>
       <button id="urlBtn">Mở từ link</button>
       <button id="pasteBtn">Dán nội dung</button>
+      <button id="installBtn2" hidden title="Cài UPMD như một ứng dụng, đọc được khi không có mạng">Cài ứng dụng</button>
       <textarea id="paste" placeholder="Dán Markdown vào đây" aria-label="Dán Markdown"></textarea>
       <p class="keys">Khi đang bôi đen: <kbd>1</kbd>–<kbd>4</kbd> highlight, <kbd>U</kbd> gạch chân, <kbd>N</kbd> ghi chú, <kbd>R</kbd> đọc từ đây.<br>
         Khi đọc: <kbd>Ctrl</kbd>+<kbd>F</kbd> tìm, <kbd>J</kbd>/<kbd>K</kbd> chuyển mục, <kbd>G</kbd> đi tới mục, <kbd>T</kbd> mục lục, <kbd>F</kbd> tập trung.<br>
