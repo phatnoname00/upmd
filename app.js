@@ -80,6 +80,7 @@
     closeNote(true); ttsStop();
     cur=rec; rec.opened=Date.now(); reatt=null;
     curWords=rec.text.split(/\s+/).filter(Boolean).length;
+    ttsDocLang=ttsLangOf(rec.text); // ngôn ngữ chính của tài liệu, để chọn giọng đọc
     document.body.classList.add('has-doc');
     baseHTML=resolveRel(render(rec.text),rec.src);
     var up=upgrade(rec,plainOf(baseHTML)),announce=rec.announce; delete rec.announce;
@@ -1272,12 +1273,62 @@
     for(var i=0;i<bl.length;i++){if(bl[i].getBoundingClientRect().bottom>110)return i}
     return 0;
   }
+  /* ---- Chọn giọng ----
+     1) Chấm điểm giọng: ưu tiên giọng AI tự nhiên (Natural/Online: HoaiMy, NamMinh của Edge),
+        rồi Linh (Apple), Google, cuối cùng mới tới giọng cũ của hệ điều hành.
+     2) Ngôn ngữ đọc xét theo CẢ tài liệu: tài liệu tiếng Việt thì câu không dấu vẫn đọc giọng Việt,
+        chỉ câu rõ ràng là tiếng Anh mới chuyển sang giọng Anh. */
+  var ttsDocLang='vi',ttsBad={},ttsWarned=false;
+  var EN_WORDS=/\b(the|and|is|are|of|to|with|for|this|that|you|your|it|in|on|be|can|will|not|or|from|by|an|as|at|we|use|using)\b/gi;
+  function ttsLangOf(text){ // 'vi' hoặc 'en' cho cả tài liệu
+    var w=text.slice(0,20000).split(/\s+/).filter(function(x){return /[a-zà-ỹđ]/i.test(x)});
+    if(!w.length)return 'vi';
+    var vi=w.filter(function(x){return ttsVI.test(x)}).length;
+    return vi/w.length>0.12?'vi':'en';
+  }
+  function ttsLangFor(txt){ // ngôn ngữ cho một đoạn đọc
+    if(ttsVI.test(txt))return 'vi';
+    if(ttsDocLang!=='vi')return 'en';
+    var words=txt.split(/\s+/).length,en=(txt.match(EN_WORDS)||[]).length;
+    return words>=4&&en/words>0.2?'en':'vi'; // câu không dấu trong tài liệu Việt: chỉ coi là tiếng Anh khi có nhiều từ tiếng Anh
+  }
+  function isLang(v,l){return String(v.lang||'').toLowerCase().replace('_','-').indexOf(l)===0}
+  function voiceScore(v){
+    var n=v.name||'',s=10;
+    if(/natural|neural|online|enhanced|premium|nâng cao|wavenet/i.test(n))s+=50;
+    if(/hoaimy|hoài my|namminh|nam minh/i.test(n))s+=20;
+    if(/\blinh\b/i.test(n))s+=15;
+    if(/google/i.test(n))s+=12;
+    if(/microsoft an\b|\ban -/i.test(n))s-=3; // giọng cũ của Windows, nghe như máy
+    if(v.localService===false)s+=2;
+    return s;
+  }
+  function isNatural(v){return /natural|neural|online|enhanced|premium|nâng cao|wavenet/i.test(v.name||'')}
+  function bestVoice(l,skipBad){
+    var best=null,bs=-1;
+    speechSynthesis.getVoices().forEach(function(v){
+      if(!isLang(v,l)||(skipBad&&ttsBad[v.voiceURI]))return;
+      var s=voiceScore(v);if(s>bs){bs=s;best=v}
+    });
+    return best;
+  }
+  function viVoices(){return speechSynthesis.getVoices().filter(function(v){return isLang(v,'vi')})}
   function ttsVoiceFor(text){
     var vs=speechSynthesis.getVoices(),pick=$('ttVoice').value,i;
-    if(pick){for(i=0;i<vs.length;i++)if(vs[i].voiceURI===pick)return vs[i]}
-    var want=ttsVI.test(text)?'vi':'en';
-    for(i=0;i<vs.length;i++)if(vs[i].lang.toLowerCase().indexOf(want)===0)return vs[i];
-    return null;
+    if(pick&&!ttsBad[pick]){for(i=0;i<vs.length;i++)if(vs[i].voiceURI===pick)return vs[i]}
+    return bestVoice(ttsLangFor(text),true);
+  }
+  function shortName(v){
+    return (v.name||'').replace(/^Microsoft\s+/i,'').replace(/\s*-\s*(Vietnamese|English).*$/i,'').replace(/\s*\((Vietnam|Viet Nam)\)/i,'').trim()||v.name;
+  }
+  /* Hiện giọng đang đọc trên thanh đọc; cảnh báo khi đọc tiếng Việt bằng giọng nước ngoài */
+  function ttsShowVoice(v,lang){
+    var el=$('ttNow');el.textContent='';el.classList.remove('warn');
+    if(!v){el.textContent=lang==='vi'?'Không có giọng Việt':'Giọng mặc định';if(lang==='vi')el.classList.add('warn');return}
+    var foreign=lang==='vi'&&!isLang(v,'vi');
+    el.textContent=(isNatural(v)&&isLang(v,'vi')?'★ ':'')+shortName(v)+(foreign?' · giọng nước ngoài':'');
+    el.title='Đang đọc bằng: '+v.name+' ('+v.lang+')'+(v.localService===false?' · giọng trực tuyến, cần mạng':'');
+    if(foreign)el.classList.add('warn');
   }
   function ttsHalt(){try{speechSynthesis.resume();speechSynthesis.cancel()}catch(e){}}
   function ttsSetPlay(){$('ttPlay').textContent=ttsPaused?'Tiếp tục':'Tạm dừng'}
@@ -1294,25 +1345,42 @@
     (function next(){
       if(g!==ttsGen)return;
       if(k>=parts.length){ttsRead(i+1,g);return}
-      var txt=parts[k++],u=new SpeechSynthesisUtterance(txt),v=ttsVoiceFor(txt);
-      if(v){u.voice=v;u.lang=v.lang}else u.lang=ttsVI.test(txt)?'vi-VN':'en-US';
+      var txt=parts[k++],lang=ttsLangFor(txt),u=new SpeechSynthesisUtterance(txt),v=ttsVoiceFor(txt);
+      if(v){u.voice=v;u.lang=v.lang}else u.lang=lang==='vi'?'vi-VN':'en-US';
       u.rate=rate;
+      ttsShowVoice(v,lang);
       u.onend=next;
       u.onerror=function(e){
         if(g!==ttsGen)return;
         var er=e&&e.error;
         if(er==='interrupted'||er==='canceled')return;
         if(er==='not-allowed'){ttsStop();toast('Trình duyệt chặn việc đọc, hãy bấm nút "Đọc" lại');return}
+        // giọng trực tuyến lỗi (thường do mất mạng): đánh dấu hỏng rồi đọc lại câu này bằng giọng khác
+        if(v&&!ttsBad[v.voiceURI]&&(v.localService===false||er==='synthesis-failed'||er==='network'||er==='voice-unavailable')){
+          ttsBad[v.voiceURI]=1;
+          var alt=bestVoice(lang,true);
+          if(alt){toast('Giọng "'+shortName(v)+'" đang lỗi (có thể do mất mạng), chuyển sang "'+shortName(alt)+'"');k--;next();return}
+        }
         next();
       };
       ttsU=u; // giữ tham chiếu để trình duyệt không thu gom giữa chừng
       speechSynthesis.speak(u);
     })();
   }
+  /* Danh sách giọng có thể nạp chậm (Chrome, Edge): chờ tối đa ~1,2 giây */
+  function withVoices(cb){
+    if(speechSynthesis.getVoices().length)return cb();
+    var done=false;function go(){if(done)return;done=true;cb()}
+    if(speechSynthesis.addEventListener)speechSynthesis.addEventListener('voiceschanged',go,{once:true});
+    setTimeout(go,1200);
+  }
   function ttsStart(i){
     if(!ttsSupported()){toast('Trình duyệt này không hỗ trợ đọc thành tiếng');return}
     if(!cur||showSource){toast('Hãy mở một tệp để đọc');return}
     if(i==null||i<0)i=ttsVisIdx();
+    if(!speechSynthesis.getVoices().length){withVoices(function(){ttsFill();ttsStart(i)});return}
+    // tài liệu tiếng Việt mà máy không có giọng Việt: hướng dẫn cài (chỉ nhắc một lần mỗi phiên)
+    if(ttsDocLang==='vi'&&!viVoices().length&&!ttsWarned){ttsWarned=true;openVoiceGuide(true)}
     ttsHalt(); ttsGen++; ttsPaused=false; ttsSetPlay();
     ttsEl.hidden=false; document.body.classList.add('tts-on'); ttsBtn.setAttribute('aria-pressed','true');
     var g=ttsGen;
@@ -1335,14 +1403,63 @@
     }
     sel.removeAllRanges(); hideTb(); ttsStart(i);
   }
+  /* Danh sách giọng: nhóm "Tiếng Việt" (giọng tốt nhất lên đầu, ★ = giọng tự nhiên) rồi tới ngôn ngữ khác */
   function ttsFill(){
     var sel=$('ttVoice'),keep=sel.value||lsGet('md-tts-voice')||'';
-    var vs=speechSynthesis.getVoices().slice().sort(function(a,b){
-      var x=/^vi/i.test(a.lang)?0:1,y=/^vi/i.test(b.lang)?0:1; return x-y||a.name.localeCompare(b.name)});
-    sel.innerHTML='<option value="">Giọng: tự động</option>';
-    vs.forEach(function(v){var o=document.createElement('option');o.value=v.voiceURI;o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o)});
+    var all=speechSynthesis.getVoices().slice();
+    var vi=all.filter(function(v){return isLang(v,'vi')}).sort(function(a,b){return voiceScore(b)-voiceScore(a)||a.name.localeCompare(b.name)});
+    var other=all.filter(function(v){return !isLang(v,'vi')}).sort(function(a,b){return a.lang.localeCompare(b.lang)||a.name.localeCompare(b.name)});
+    var auto=bestVoice('vi');
+    sel.innerHTML='';
+    var o0=document.createElement('option');o0.value='';
+    o0.textContent='Giọng: tự động'+(auto?' ('+shortName(auto)+')':'');sel.appendChild(o0);
+    function group(label,arr){
+      if(!arr.length)return;
+      var g=document.createElement('optgroup');g.label=label;
+      arr.forEach(function(v){var o=document.createElement('option');o.value=v.voiceURI;
+        o.textContent=(isNatural(v)&&isLang(v,'vi')?'★ ':'')+v.name+' ('+v.lang+')'+(v.localService===false?' · cần mạng':'');g.appendChild(o)});
+      sel.appendChild(g);
+    }
+    group('Tiếng Việt',vi);
+    if(!vi.length){var e=document.createElement('option');e.disabled=true;e.textContent='Chưa có giọng tiếng Việt (bấm "Giọng Việt?" để xem cách cài)';sel.appendChild(e)}
+    group('Ngôn ngữ khác',other);
     sel.value=keep; if(sel.value!==keep)sel.value='';
   }
+
+  /* ---- Hướng dẫn cài giọng tiếng Việt theo thiết bị đang dùng ---- */
+  function platform(){
+    var ua=navigator.userAgent||'',touchMac=/Macintosh/.test(ua)&&navigator.maxTouchPoints>1;
+    if(/iPhone|iPad|iPod/.test(ua)||touchMac)return 'ios';
+    if(/Android/i.test(ua))return 'android';
+    var edge=/Edg\//.test(ua);
+    if(/Windows/i.test(ua))return edge?'win-edge':'win';
+    if(/Macintosh/.test(ua))return edge?'mac-edge':'mac';
+    if(/CrOS/.test(ua))return 'chromeos';
+    return edge?'linux-edge':'linux';
+  }
+  var GUIDE={
+    'win-edge':['Bạn đang dùng Microsoft Edge trên Windows','<li>Edge có sẵn giọng AI rất tự nhiên: <b>Microsoft HoaiMy Online (Natural)</b> (nữ) và <b>NamMinh Online (Natural)</b> (nam). Hãy chọn một giọng này ở ô "Giọng".</li><li>Hai giọng này <b>cần có mạng</b>. Nếu danh sách chưa có, hãy kiểm tra mạng rồi tải lại trang.</li><li>Muốn đọc khi không có mạng: Cài đặt Windows → <b>Thời gian và ngôn ngữ → Giọng nói → Quản lý giọng nói → Thêm giọng nói → Tiếng Việt</b>, rồi khởi động lại Edge.</li>'],
+    'win':['Bạn đang dùng Windows','<li><b>Cách tốt nhất:</b> mở UPMD bằng trình duyệt <b>Microsoft Edge</b>. Edge có giọng AI tự nhiên <b>HoaiMy</b> và <b>NamMinh</b> (cần mạng), Chrome và Firefox không có hai giọng này.</li><li>Hoặc cài giọng tiếng Việt cho Windows: Cài đặt → <b>Thời gian và ngôn ngữ → Giọng nói → Quản lý giọng nói → Thêm giọng nói → Tiếng Việt</b>. Sau đó đóng hẳn rồi mở lại trình duyệt.</li>'],
+    'mac-edge':['Bạn đang dùng Microsoft Edge trên Mac','<li>Chọn giọng <b>HoaiMy Online (Natural)</b> hoặc <b>NamMinh Online (Natural)</b> ở ô "Giọng" (cần mạng).</li><li>Muốn đọc khi không có mạng: Cài đặt hệ thống → <b>Trợ năng → Nội dung được đọc → Giọng hệ thống → Quản lý giọng</b> → Tiếng Việt → tải <b>Linh</b>.</li>'],
+    'mac':['Bạn đang dùng Mac','<li>Cài đặt hệ thống → <b>Trợ năng → Nội dung được đọc → Giọng hệ thống → Quản lý giọng</b> → mục <b>Tiếng Việt</b> → tải <b>Linh</b> (nên chọn bản "Nâng cao" nếu có). Sau đó mở lại trình duyệt.</li><li>Hoặc dùng trình duyệt <b>Microsoft Edge</b> để có giọng AI HoaiMy / NamMinh (cần mạng).</li>'],
+    'ios':['Bạn đang dùng iPhone / iPad','<li>Cài đặt → <b>Trợ năng → Nội dung được đọc → Giọng nói → Tiếng Việt</b> → tải <b>Linh (Nâng cao)</b>.</li><li>Sau khi tải xong, đóng hẳn trình duyệt rồi mở lại trang này.</li>'],
+    'android':['Bạn đang dùng Android','<li>Cài hoặc cập nhật ứng dụng <b>Dịch vụ giọng nói của Google</b> (Speech Services by Google) trên CH Play.</li><li>Cài đặt → <b>Hệ thống → Ngôn ngữ và bàn phím → Đầu ra chuyển văn bản thành lời nói</b> (tên mục có thể khác tùy máy) → chọn công cụ của Google → <b>Cài đặt dữ liệu giọng nói → Tiếng Việt</b>.</li><li>Mở lại trình duyệt sau khi cài xong.</li>'],
+    'chromeos':['Bạn đang dùng Chromebook','<li>Cài đặt → <b>Hỗ trợ tiếp cận → Chuyển văn bản sang lời nói → Giọng nói</b> → tải giọng <b>Tiếng Việt</b>.</li>'],
+    'linux':['Bạn đang dùng Linux','<li>Trình duyệt trên Linux thường chỉ có giọng của <b>espeak-ng</b> (cài gói <code>espeak-ng</code>), chất lượng khá máy móc.</li><li>Để có giọng tự nhiên, hãy dùng <b>Microsoft Edge</b> (giọng HoaiMy / NamMinh, cần mạng).</li>'],
+    'linux-edge':['Bạn đang dùng Microsoft Edge trên Linux','<li>Chọn giọng <b>HoaiMy Online (Natural)</b> hoặc <b>NamMinh Online (Natural)</b> ở ô "Giọng" (cần mạng). Nếu chưa thấy, hãy kiểm tra mạng rồi tải lại trang.</li>']
+  };
+  function openVoiceGuide(auto){
+    var d=$('vgDlg'),p=platform(),g=GUIDE[p]||GUIDE.linux,vs=viVoices().sort(function(a,b){return voiceScore(b)-voiceScore(a)});
+    $('vgWhy').textContent=auto?'Máy của bạn chưa có giọng đọc tiếng Việt, nên trình duyệt đang đọc chữ Việt bằng giọng nước ngoài.':
+      vs.length?'Máy đã có '+vs.length+' giọng tiếng Việt: '+vs.map(shortName).join(', ')+'.':'Máy của bạn chưa có giọng đọc tiếng Việt.';
+    $('vgOs').textContent=g[0];
+    $('vgSteps').innerHTML=g[1]; // nội dung cố định trong mã, không lấy từ tài liệu
+    $('vgBest').hidden=!(vs.length&&!vs.some(isNatural)&&!/edge/.test(p));
+    if(!d.open){if(d.showModal)d.showModal();else d.setAttribute('open','')}
+  }
+  $('ttHelp').addEventListener('click',function(){openVoiceGuide(false)});
+  $('vgClose').addEventListener('click',function(){$('vgDlg').close()});
+  $('vgDlg').addEventListener('click',function(e){if(e.target===this)this.close()});
   ttsBtn.addEventListener('click',function(){if(!ttsEl.hidden)ttsStop();else ttsStart(-1)});
   $('ttStop').addEventListener('click',ttsStop);
   $('ttPrev').addEventListener('click',function(){ttsStart(Math.max(0,ttsIdx-1))});
@@ -1796,7 +1913,7 @@
 
   /* ---------- Phím tắt ---------- */
   document.addEventListener('keydown',function(e){
-    if(helpEl.open||gotoEl.open||lbEl.open||urlDlg.open)return; // <dialog> tự xử lý Esc và phím riêng
+    if(helpEl.open||gotoEl.open||lbEl.open||urlDlg.open||$('vgDlg').open)return; // <dialog> tự xử lý Esc và phím riêng
     var k=(e.key||'').toLowerCase();
     if(e.key==='Escape'){
       if(!snEl.hidden){closeNote(true);return}

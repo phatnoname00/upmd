@@ -472,12 +472,30 @@ body.tts-on #st{display:none}
 #urlDlg .err[hidden]{display:none}
 #urlDlg .row{display:flex; justify-content:flex-end; gap:.5rem; margin-top:1rem}
 
+/* giọng đọc: tên giọng đang dùng + hướng dẫn cài giọng Việt */
+.ttnow{flex:1 1 100%; font-size:.78rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 .2rem}
+.ttnow:empty{display:none}
+.ttnow::before{content:"Đang đọc bằng: "}
+.ttnow.warn{color:var(--danger); font-weight:600}
+#ttHelp{font-size:.8rem}
+#vgDlg{width:min(34rem,calc(100vw - 2rem)); max-height:calc(100vh - 2rem); padding:1.1rem 1.3rem; border:1px solid var(--line); border-radius:14px;
+  background:var(--panel); color:var(--ink); box-shadow:var(--shadow); font:.92rem/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+#vgDlg h2{margin:0 0 .5rem; font-size:1.1rem}
+#vgDlg p{margin:0 0 .6rem}
+#vgDlg .vgOs{font-weight:600; margin-top:.8rem}
+#vgDlg ol{margin:0 0 .8rem; padding-left:1.3rem}
+#vgDlg li{margin-bottom:.45rem}
+#vgDlg .vgBest{padding:.55rem .75rem; border-radius:8px; background:var(--hover)}
+#vgDlg .vgBest[hidden]{display:none}
+#vgDlg .vgNote{font-size:.78rem; color:var(--muted)}
+#vgDlg .row{display:flex; justify-content:flex-end; margin-top:.8rem}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important; transition:none!important}
 }
 
 @media print{
-  .bar,.side,#prog,#sky,#scrim,#tb,.grip,#wbadge,#toast,#sn,#tts,.cbh,#zenX,#help,#st,.hlink,.hfold,#goto,#lb,#urlDlg{display:none!important}
+  .bar,.side,#prog,#sky,#scrim,#tb,.grip,#wbadge,#toast,#sn,#tts,.cbh,#zenX,#help,#st,.hlink,.hfold,#goto,#lb,#urlDlg,#vgDlg{display:none!important}
   #doc .fh{display:revert!important} #doc .folded::after{content:none}
   body.dock main{padding-right:1rem}
   body{background:#fff; color:#000} .sheet{border:0; background:none; width:100%}
@@ -660,7 +678,19 @@ body.tts-on #st{display:none}
     <option value="1.5">1,5×</option><option value="1.75">1,75×</option><option value="2">2×</option>
   </select>
   <select id="ttVoice" aria-label="Giọng đọc"></select>
+  <button id="ttHelp" title="Cách có giọng đọc tiếng Việt tự nhiên">Giọng Việt?</button>
+  <span id="ttNow" class="ttnow" aria-live="polite"></span>
 </div>
+
+<dialog id="vgDlg" aria-label="Cài giọng đọc tiếng Việt">
+  <h2>Giọng đọc tiếng Việt</h2>
+  <p id="vgWhy"></p>
+  <p class="vgOs" id="vgOs"></p>
+  <ol id="vgSteps"></ol>
+  <p class="vgBest" id="vgBest" hidden>Giọng tiếng Việt trên máy bạn là giọng thường. Muốn nghe tự nhiên như người thật, hãy thử mở trang này bằng <b>Microsoft Edge</b> và chọn giọng <b>HoaiMy</b> hoặc <b>NamMinh (Natural)</b>.</p>
+  <p class="vgNote">Giọng đọc do trình duyệt và hệ điều hành cung cấp, UPMD không gửi nội dung tài liệu đi đâu cả. Riêng giọng "Online (Natural)" của Edge là do Microsoft xử lý qua mạng.</p>
+  <div class="row"><button id="vgClose" class="primary">Đã hiểu</button></div>
+</dialog>
 
 <main>
   <div class="sheet" id="sheet">
